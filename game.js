@@ -1,7 +1,7 @@
 /**
  * ============================================================================
- * SUPER TROLL WORLD - O Jogo da Discórdia
- * Jogo de plataforma 2D estilo "Troll Game" (Cat Mario / I Wanna Be The Guy)
+ * SUPER WORLD - O Jogo da Discórdia
+ * Jogo de plataforma 2D estilo retrô com física dinâmica
  * JavaScript Puro (Vanilla JS) + HTML5 Canvas + Web Audio API Sintetizada
  * ============================================================================
  */
@@ -347,7 +347,7 @@ const LEVELS = [
   {
     id: 1,
     name: "Fase 1: O Passeio 'Inocente'",
-    width: 3200,
+    width: 4500,
     height: 500,
     spawnX: 60,
     spawnY: 340,
@@ -376,71 +376,84 @@ const LEVELS = [
       // PLATAFORMA QUE DESMORONA APÓS 0.3s
       { type: 'falling_platform', x: 500, y: 340, width: 70, height: 24 },
 
-      // CHÃO DO MEIO (Parte 1: Sólido)
-      { type: 'ground', x: 610, y: 400, width: 200, height: 100 },
+      // CHÃO DO MEIO (Agora 100% sólido, chão falso apagado)
+      { type: 'ground', x: 610, y: 400, width: 380, height: 100 },
 
-      // Placa enganosa apontando para a direita: "CAMINHO 100% SEGURO ->"
+      // Placa apontando para a direita: "CAMINHO 100% SEGURO ->"
       { type: 'sign', x: 740, y: 360, width: 40, height: 40, text: "CAMINHO SEGURO ->\n(CONFIA! 😉)" },
 
-      // CHÃO FALSO / ILUSÓRIO (Parece 100% grama sólida, mas é vazio!)
-      { type: 'illusion_floor', x: 810, y: 400, width: 150, height: 100 },
-      { type: 'spike', x: 810, y: 470, width: 150, height: 30 }, // Espinhos lá embaixo
-
-      // Texto de aviso no ar enganoso
+      // Texto de aviso no ar
       { type: 'text_troll', x: 830, y: 320, text: "Pule Aqui! ⭐" },
 
-      // Bloco Invisível #2 em cima da ilusão (para garantir que se o jogador pular, bata a cabeça e caia!)
+      // Bloco Invisível #2 (se pular bate a cabeça, mas cai no chão sólido)
       { type: 'invisible_block', x: 880, y: 250, width: 36, height: 36, hit: false },
 
       // Plataforma flutuante alta
-      { type: 'platform', x: 990, y: 320, width: 100, height: 24 },
+      { type: 'platform', x: 1010, y: 320, width: 100, height: 24 },
 
       // Bloco '?' que TELEPORTA para o início rindo!
-      { type: 'question_block', x: 1020, y: 200, width: 36, height: 36, action: 'teleport_start', used: false },
+      { type: 'question_block', x: 1040, y: 200, width: 36, height: 36, action: 'teleport_start', used: false },
 
-      // CHECKPOINT (Uma folga... ou será?)
+      // CHECKPOINT (Ilha aumentada de tamanho)
       { type: 'checkpoint', x: 1140, y: 340, width: 30, height: 60, reached: false },
+      { type: 'ground', x: 1110, y: 400, width: 420, height: 100 },
 
-      // Chão após checkpoint
-      { type: 'ground', x: 1120, y: 400, width: 300, height: 100 },
-
-      // MOEDA TROLL QUE EXPLODE
-      { type: 'troll_coin', x: 1240, y: 360, width: 24, height: 24, collected: false },
-      { type: 'text_troll', x: 1200, y: 330, text: "MOEDA GRÁTIS! 💰" },
-
-      // CANO TROLL (Suga o jogador para trás contra espinhos)
-      { type: 'suction_pipe', x: 1360, y: 310, width: 50, height: 90, force: -8 },
+      // MOEDA TROLL QUE EXPLODE (texto removido)
+      { type: 'troll_coin', x: 1250, y: 360, width: 24, height: 24, collected: false },
 
       // Espinho logo atrás do cano
-      { type: 'spike', x: 1300, y: 380, width: 40, height: 20 },
+      { type: 'spike', x: 1350, y: 380, width: 40, height: 20 },
+
+      // CANO TROLL (Suga o jogador para trás contra espinhos)
+      { type: 'suction_pipe', x: 1450, y: 310, width: 50, height: 90, force: -8 },
 
       // Pulos em plataformas estreitas
-      { type: 'falling_platform', x: 1470, y: 340, width: 60, height: 20 },
-      { type: 'spike', x: 1440, y: 470, width: 200, height: 30 },
-      { type: 'falling_platform', x: 1590, y: 310, width: 60, height: 20 },
+      { type: 'falling_platform', x: 1560, y: 340, width: 60, height: 20 },
+      { type: 'spike', x: 1530, y: 470, width: 230, height: 30 },
+      { type: 'falling_platform', x: 1670, y: 310, width: 60, height: 20 },
 
       // Bloco '?' esmagador (o bloco despenca quando bate nele)
-      { type: 'question_block', x: 1590, y: 190, width: 36, height: 36, action: 'crush_down', used: false },
+      { type: 'question_block', x: 1670, y: 190, width: 36, height: 36, action: 'crush_down', used: false },
 
-      // Próxima ilha
-      { type: 'ground', x: 1720, y: 400, width: 320, height: 100 },
-      { type: 'inverted_enemy', x: 1850, y: 370, width: 30, height: 30, vx: 1.5, patrolLeft: 1740, patrolRight: 2000 },
-      { type: 'inverted_enemy', x: 1960, y: 370, width: 30, height: 30, vx: -1.8, patrolLeft: 1800, patrolRight: 2020 },
+      // Ilha das duas criaturas (espaço ampliado e criaturas com distância bem maior entre elas)
+      { type: 'ground', x: 1780, y: 400, width: 520, height: 100 },
+      { type: 'inverted_enemy', x: 1860, y: 370, width: 30, height: 30, vx: 1.4, patrolLeft: 1800, patrolRight: 1980 },
+      { type: 'inverted_enemy', x: 2180, y: 370, width: 30, height: 30, vx: -1.4, patrolLeft: 2060, patrolRight: 2280 },
 
-      // Gravidade Invertida temporária
-      { type: 'gravity_zone', x: 2100, y: 100, width: 200, height: 300, duration: 240 },
-      { type: 'platform', x: 2100, y: 100, width: 200, height: 24 }, // Teto onde você anda de ponta cabeça!
-      { type: 'spike', x: 2150, y: 124, width: 60, height: 20, upsideDown: true },
+      // Gravidade Invertida temporária (zona e plataforma do teto ligeiramente aumentadas)
+      { type: 'gravity_zone', x: 2380, y: 90, width: 280, height: 310 },
+      { type: 'platform', x: 2380, y: 90, width: 280, height: 24 }, // Teto onde você anda de ponta cabeça!
+      { type: 'spike', x: 2490, y: 114, width: 60, height: 20, upsideDown: true },
 
-      // Chão do final
-      { type: 'ground', x: 2360, y: 400, width: 600, height: 100 },
+      // Chão do final (ilha final muito mais longa para esconder o verdadeiro castelo)
+      { type: 'ground', x: 2660, y: 400, width: 1750, height: 100 },
 
-      // BANDEIRA FALSA! (Se você encostar nela, ela quebra e abre um alçapão embaixo!)
-      { type: 'fake_flag', x: 2620, y: 220, width: 40, height: 180, triggered: false },
+      // ESCADARIA DE BLOCOS INVISÍVEIS PARA BURLAR A BANDEIRA FALSA:
+      // Degrau 1: Pule antes da bandeira para revelar ou subir
+      { type: 'invisible_block', x: 2900, y: 300, width: 36, height: 36, hit: false, isSecretPath: true },
+      // Degrau 2: Subindo a escada
+      { type: 'invisible_block', x: 2955, y: 230, width: 36, height: 36, hit: false, isSecretPath: true },
+      // Degrau 3: Ponte passando por CIMA do mastro da bandeira fake
+      { type: 'invisible_block', x: 3010, y: 160, width: 60, height: 32, hit: false, isSecretPath: true },
+      // Degrau 4: Descida segura do outro lado da bandeira
+      { type: 'invisible_block', x: 3085, y: 210, width: 45, height: 28, hit: false, isSecretPath: true },
 
-      // A VERDADEIRA SAÍDA: Está atrás do castelo ou no alto pulando por cima da bandeira!
-      { type: 'platform', x: 2750, y: 240, width: 80, height: 20 },
-      { type: 'true_goal', x: 2880, y: 260, width: 50, height: 140 }
+      // BANDEIRA FALSA! (Parece 100% o fim da fase, mas é a cilada)
+      { type: 'fake_flag', x: 3020, y: 220, width: 40, height: 180, triggered: false },
+
+      // Estrutura do falso castelo
+      { type: 'platform', x: 3145, y: 240, width: 90, height: 20 },
+
+      // Pista secreta dos campeões (distante, completamente fora de vista de quem está na bandeira fake!)
+      { type: 'text_troll', x: 3280, y: 300, text: "VOCÊ BURLOU A BANDEIRA FAKE! 🏆" },
+      { type: 'platform', x: 3420, y: 310, width: 90, height: 20 },
+      { type: 'platform', x: 3650, y: 260, width: 90, height: 20 },
+      { type: 'text_troll', x: 3780, y: 240, text: "O VERDADEIRO FINAL LOGO À FRENTE! 👑" },
+      { type: 'platform', x: 3980, y: 280, width: 100, height: 20 },
+      { type: 'platform', x: 4130, y: 240, width: 80, height: 20 },
+
+      // A VERDADEIRA SAÍDA: Bem longe (mais de 1200px da bandeira fake!), impossível ver antes da hora!
+      { type: 'true_goal', x: 4260, y: 260, width: 60, height: 140 }
     ]
   },
 
@@ -574,6 +587,7 @@ class TrollPlatformerGame {
       left: false,
       right: false,
       up: false,
+      down: false,
       jumpBuffered: false
     };
 
@@ -650,6 +664,9 @@ class TrollPlatformerGame {
     if (e.code === 'ArrowRight' || e.code === 'KeyD') {
       this.keys.right = true;
     }
+    if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+      this.keys.down = true;
+    }
     if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
       this.keys.up = true;
       this.player.jumpBuffer = 8; // buffers jump for 8 frames
@@ -680,6 +697,9 @@ class TrollPlatformerGame {
     }
     if (e.code === 'ArrowRight' || e.code === 'KeyD') {
       this.keys.right = false;
+    }
+    if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+      this.keys.down = false;
     }
     if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
       this.keys.up = false;
@@ -913,15 +933,6 @@ class TrollPlatformerGame {
 
     if (this.gameState !== 'PLAYING') return;
 
-    // Gravidade Invertida temporária
-    if (this.isGravityInverted) {
-      this.gravityInvertTimer--;
-      if (this.gravityInvertTimer <= 0) {
-        this.isGravityInverted = false;
-        this.spawnFloatingText("Gravidade Normalizada!", this.player.x, this.player.y - 20, '#00f5d4');
-      }
-    }
-
     // 1. Movimentação Horizontal
     const currentSpeed = this.player.speed;
     if (this.keys.left) {
@@ -1042,13 +1053,29 @@ class TrollPlatformerGame {
         if (!ent.hit && !this.isGravityInverted && this.player.vy < 0 && this.checkAABB(pBox, ent)) {
           // Bateu a cabeça no bloco invisível clássico de Cat Mario!
           ent.hit = true;
-          this.player.y = ent.y + ent.height;
+          this.player.y = ent.y + (ent.height || ent.width);
           this.player.vy = 2; // derruba o jogador imediatamente para baixo!
           AudioSys.playBump();
-          AudioSys.playTrollLaugh();
-          this.spawnFloatingText("TROUXA! 😂", ent.x, ent.y - 20, '#ff2a5f');
+          if (ent.isSecretPath) {
+            this.spawnFloatingText("CAMINHO SECRETO! 🪜", ent.x - 20, ent.y - 20, '#00f5d4');
+          } else {
+            AudioSys.playTrollLaugh();
+            this.spawnFloatingText("TROUXA! 😂", ent.x, ent.y - 20, '#ff2a5f');
+          }
           return;
         }
+
+        // Se for do caminho secreto e o jogador pular por CIMA, também descobre e aterrissa!
+        if (!ent.hit && ent.isSecretPath && !this.isGravityInverted && this.player.vy > 0 && this.checkAABB(pBox, ent)) {
+          ent.hit = true;
+          this.player.y = ent.y - this.player.height;
+          this.player.vy = 0;
+          this.player.isGrounded = true;
+          AudioSys.playBump();
+          this.spawnFloatingText("DESCOBERTO! ✨", ent.x - 10, ent.y - 20, '#00f5d4');
+          return;
+        }
+
         if (!ent.hit) continue;
       }
 
@@ -1167,10 +1194,39 @@ class TrollPlatformerGame {
   updateEntities() {
     const pBox = { x: this.player.x, y: this.player.y, width: this.player.width, height: this.player.height };
 
+    // 0. Verificação de Zona Anti-Gravidade (Inverte dentro, volta ao normal imediatamente ao sair)
+    let inGravityZone = false;
+    for (const ent of this.entities) {
+      if (ent.type === 'gravity_zone' && this.checkAABB(pBox, ent)) {
+        inGravityZone = true;
+        break;
+      }
+    }
+
+    if (inGravityZone) {
+      if (!this.isGravityInverted) {
+        this.isGravityInverted = true;
+        AudioSys.playTrapTrigger();
+        this.screenShake = 8;
+        this.spawnFloatingText("GRAVIDADE INVERTIDA! 🌀", this.player.x - 20, this.player.y - 20, '#ff2a5f');
+      }
+    } else {
+      if (this.isGravityInverted) {
+        this.isGravityInverted = false;
+        this.player.isGrounded = false;
+        this.player.vy = 2; // começa a cair para baixo
+        AudioSys.playBump();
+        this.spawnFloatingText("Gravidade Normal! ⬇️", this.player.x - 20, this.player.y - 20, '#00f5d4');
+      }
+    }
+
     for (let i = 0; i < this.entities.length; i++) {
       const ent = this.entities[i];
 
-      // 1. Inimigo Invertido (Inverted Enemy):
+      // Ignora processamento duplicado da zona de gravidade
+      if (ent.type === 'gravity_zone') {
+        continue;
+      }
       // Pular na cabeça NÃO mata o inimigo! Se você pular nele ou chegar perto,
       // ele pula agressivamente na sua direção APENAS UMA VEZ!
       if (ent.type === 'inverted_enemy') {
@@ -1264,33 +1320,53 @@ class TrollPlatformerGame {
 
       // 6. Cano de Sucção Reversa
       if (ent.type === 'suction_pipe') {
-        // Se o jogador estiver na área de sucção do cano (raio horizontal)
-        const dist = this.player.x - ent.x;
-        if (dist > -120 && dist < 160 && Math.abs(this.player.y - ent.y) < 100) {
-          this.player.vx += ent.force * 0.15; // puxa para trás!
-          // Partículas de vento
-          if (Math.random() < 0.3) {
+        const pCenterX = this.player.x + this.player.width / 2;
+
+        // Área de sucção: na frente do cano (até 220px à esquerda) e na altura dele
+        const inSuctionArea = (
+          pCenterX >= ent.x - 220 &&
+          pCenterX <= ent.x + ent.width + 20 &&
+          this.player.y + this.player.height >= ent.y - 60 &&
+          this.player.y <= ent.y + ent.height
+        );
+
+        if (inSuctionArea) {
+          // Puxa ativamente o jogador para trás em direção aos espinhos!
+          // Aplicação direta no x para não ser cancelada pelo teclado
+          const pullForce = 4.3;
+          this.player.x -= pullForce;
+
+          // Partículas visuais de vento correndo em alta velocidade para dentro do cano
+          for (let p = 0; p < 2; p++) {
             this.particles.push({
-              x: ent.x + ent.width / 2 + (Math.random() - 0.5) * 40,
-              y: ent.y + Math.random() * ent.height,
-              vx: ent.force * 0.4,
-              vy: (Math.random() - 0.5) * 2,
-              size: 2,
-              color: 'rgba(255, 255, 255, 0.4)',
-              life: 15
+              x: ent.x - Math.random() * 180,
+              y: ent.y + 6 + Math.random() * 32,
+              vx: 6 + Math.random() * 4,
+              vy: (Math.random() - 0.5) * 1.5,
+              size: Math.random() * 3 + 2,
+              color: 'rgba(255, 255, 255, 0.7)',
+              life: 16
             });
           }
         }
-      }
 
-      // 7. Zona de Gravidade Invertida
-      if (ent.type === 'gravity_zone') {
-        if (this.checkAABB(pBox, ent) && !this.isGravityInverted) {
-          this.isGravityInverted = true;
-          this.gravityInvertTimer = ent.duration || 200;
+        // Se o jogador estiver em cima do cano e apertar BAIXO (S ou Seta Baixo):
+        const standingOnPipe = (
+          this.player.isGrounded &&
+          pCenterX >= ent.x &&
+          pCenterX <= ent.x + ent.width &&
+          Math.abs((this.player.y + this.player.height) - ent.y) < 6
+        );
+
+        if (standingOnPipe && this.keys.down) {
           AudioSys.playTrapTrigger();
-          this.screenShake = 8;
-          this.spawnFloatingText("GRAVIDADE INVERTIDA! 🌀", this.player.x - 20, this.player.y - 20, '#ff2a5f');
+          AudioSys.playTrollLaugh();
+          this.screenShake = 12;
+          this.spawnFloatingText("CANO DE SENTIDO ÚNICO! 🌀", ent.x - 60, ent.y - 30, '#ff2a5f');
+          // Dispara o jogador violentamente de volta para trás nos espinhos!
+          this.player.vx = -14;
+          this.player.vy = -7;
+          this.player.isGrounded = false;
         }
       }
 
@@ -1331,7 +1407,7 @@ class TrollPlatformerGame {
 
           // Derruba o jogador
           setTimeout(() => {
-            this.killPlayer("Bandeira falsa! A vitória nunca foi tão distante.");
+            this.killPlayer("Bandeira falsa! Dica: Pule antes da bandeira para achar a escada secreta!");
           }, 350);
           return;
         }
@@ -1656,19 +1732,35 @@ class TrollPlatformerGame {
     }
   }
 
-  // Bloco Invisível Descoberto (Rosto de Troll rindo)
+  // Bloco Invisível Descoberto (Rosto de Troll rindo ou Bloco de Caminho Secreto)
   drawLaughingTrollBlock(ent) {
     const x = ent.x;
     const y = ent.y;
     const s = ent.width;
+    const h = ent.height || s;
 
-    this.ctx.fillStyle = '#e63946';
-    this.ctx.fillRect(x, y, s, s);
-    this.ctx.fillStyle = '#ffffff';
-    this.ctx.font = '10px "Press Start 2P", monospace';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText('XD', x + s / 2, y + s / 2 + 4);
-    this.ctx.textAlign = 'left';
+    if (ent.isSecretPath) {
+      // Bloco do caminho secreto revelado (estilo brilhante neon com estrela dourada)
+      this.ctx.fillStyle = '#00f5d4';
+      this.ctx.fillRect(x, y, s, h);
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeRect(x, y, s, h);
+
+      this.ctx.fillStyle = '#0a0e17';
+      this.ctx.font = 'bold 12px "Press Start 2P", monospace';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('★', x + s / 2, y + h / 2 + 5);
+      this.ctx.textAlign = 'left';
+    } else {
+      this.ctx.fillStyle = '#e63946';
+      this.ctx.fillRect(x, y, s, h);
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.font = '10px "Press Start 2P", monospace';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('XD', x + s / 2, y + h / 2 + 4);
+      this.ctx.textAlign = 'left';
+    }
   }
 
   // Espinhos triangulares
@@ -1803,10 +1895,29 @@ class TrollPlatformerGame {
     this.ctx.lineWidth = 2;
     this.ctx.strokeRect(x, y, w, 16);
 
-    // Seta de sucção
+    // Abertura escura no topo do bocal
+    this.ctx.fillStyle = '#081c15';
+    this.ctx.fillRect(x + 4, y + 2, w - 8, 4);
+
+    // Ondas dinâmicas de vento sendo sugadas para dentro do bocal
+    this.ctx.save();
+    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+    this.ctx.lineWidth = 2;
+    const offset = (Date.now() * 0.12) % 36;
+    for (let wx = x - 130 + offset; wx < x - 10; wx += 36) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(wx, y + 2);
+      this.ctx.lineTo(wx + 14, y + 8);
+      this.ctx.lineTo(wx, y + 14);
+      this.ctx.stroke();
+    }
+
+    // Texto de aviso no cano
     this.ctx.fillStyle = '#ff2a5f';
-    this.ctx.font = '10px monospace';
-    this.ctx.fillText('<<<', x + 10, y + 36);
+    this.ctx.font = 'bold 9px monospace';
+    this.ctx.fillText('SUCÇÃO', x + 5, y + 36);
+    this.ctx.fillText('<<<', x + 12, y + 50);
+    this.ctx.restore();
   }
 
   // Zona de gravidade invertida (campo de energia roxa)
