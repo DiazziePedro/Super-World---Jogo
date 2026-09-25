@@ -85,7 +85,7 @@ class RetroAudioEngine {
 
       osc.start();
       osc.stop(this.ctx.currentTime + 0.12);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // Som de armadilha acionada (alarme rápido)
@@ -109,7 +109,7 @@ class RetroAudioEngine {
 
       osc.start();
       osc.stop(this.ctx.currentTime + 0.25);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // Explosão cômica (ruído)
@@ -142,7 +142,7 @@ class RetroAudioEngine {
       gain.connect(this.ctx.destination);
 
       noise.start();
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // Morte trágica e engraçada (trompete triste)
@@ -168,7 +168,7 @@ class RetroAudioEngine {
         osc.start(startTime);
         osc.stop(startTime + 0.17);
       });
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // Risadinha troll sintetizada
@@ -194,7 +194,7 @@ class RetroAudioEngine {
         osc.start(startTime);
         osc.stop(startTime + 0.08);
       });
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // Som de vitória triunfante
@@ -220,7 +220,7 @@ class RetroAudioEngine {
         osc.start(startTime);
         osc.stop(startTime + (idx === notes.length - 1 ? 0.7 : 0.18));
       });
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // Teleporte
@@ -243,7 +243,7 @@ class RetroAudioEngine {
 
       osc.start();
       osc.stop(this.ctx.currentTime + 0.25);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // Música Chiptune de fundo procedural e contínua
@@ -382,8 +382,9 @@ const LEVELS = [
       // Placa enganosa apontando para a direita: "CAMINHO 100% SEGURO ->"
       { type: 'sign', x: 740, y: 360, width: 40, height: 40, text: "CAMINHO SEGURO ->\n(CONFIA! 😉)" },
 
-      // Chão sólido (antigo chão falso agora 100% seguro)
-      { type: 'ground', x: 810, y: 400, width: 150, height: 100 },
+      // CHÃO FALSO / ILUSÓRIO (Parece 100% grama sólida, mas é vazio!)
+      { type: 'illusion_floor', x: 810, y: 400, width: 150, height: 100 },
+      { type: 'spike', x: 810, y: 470, width: 150, height: 30 }, // Espinhos lá embaixo
 
       // Texto de aviso no ar enganoso
       { type: 'text_troll', x: 830, y: 320, text: "Pule Aqui! ⭐" },
