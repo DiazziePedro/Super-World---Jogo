@@ -1,0 +1,569 @@
+/* ==========================================================================
+   SUPER TROLL WORLD - ESTILOS E DESIGN DO ARCADE RETRÔ
+   ========================================================================== */
+
+:root {
+  --bg-primary: #0a0e17;
+  --bg-secondary: #131a2a;
+  --bg-card: rgba(19, 26, 42, 0.94);
+  --border-glow: #00f5d4;
+  --accent-pink: #ff2a5f;
+  --accent-yellow: #ffd166;
+  --accent-blue: #3a86ff;
+  --text-main: #f0f4f8;
+  --text-muted: #8b9bb4;
+  --pixel-font: 'Press Start 2P', monospace, monospace;
+  --sans-font: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --shadow-neon: 0 0 20px rgba(0, 245, 212, 0.35);
+  --shadow-red: 0 0 20px rgba(255, 42, 95, 0.45);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+body {
+  background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(58, 134, 255, 0.15) 0%, transparent 60%),
+    radial-gradient(circle at 10% 90%, rgba(255, 42, 95, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 90% 90%, rgba(0, 245, 212, 0.08) 0%, transparent 50%),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+  color: var(--text-main);
+  font-family: var(--sans-font);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  overflow-x: hidden;
+}
+
+/* Wrapper geral da moldura arcade */
+.arcade-wrapper {
+  width: 100%;
+  max-width: 960px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+
+/* Cabeçalho do Arcade */
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-secondary);
+  border: 2px solid rgba(0, 245, 212, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  padding: 10px 20px;
+  border-radius: 12px;
+}
+
+.logo-area {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.game-badge {
+  font-family: var(--pixel-font);
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--accent-yellow);
+  text-transform: uppercase;
+}
+
+.game-title {
+  font-family: var(--pixel-font);
+  font-size: 16px;
+  color: #fff;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 10px rgba(0, 245, 212, 0.6), 2px 2px 0px #ff2a5f;
+}
+
+.header-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-retro {
+  font-family: var(--pixel-font);
+  font-size: 9px;
+  padding: 8px 12px;
+  background: #1a233a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-main);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.btn-retro:hover {
+  background: #253354;
+  border-color: var(--border-glow);
+  color: var(--border-glow);
+  transform: translateY(-1px);
+}
+
+.btn-retro:active {
+  transform: translateY(1px);
+}
+
+/* Moldura e Container do Canvas */
+.canvas-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 900 / 500;
+  max-height: 72vh;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  border: 3px solid #202b45;
+  box-shadow: 
+    0 10px 35px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(0, 245, 212, 0.25),
+    var(--shadow-neon);
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Efeito CRT / Scanlines */
+.scanlines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 4px;
+  opacity: 0.6;
+  z-index: 5;
+}
+
+/* HUD Superior no Canvas */
+.game-hud {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: flex-start;
+  gap: 16px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 14, 23, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: var(--pixel-font);
+  font-size: 10px;
+}
+
+.hud-icon {
+  font-size: 12px;
+}
+
+.hud-label {
+  color: var(--text-muted);
+}
+
+.hud-value {
+  color: #fff;
+  font-weight: bold;
+}
+
+.hud-deaths .hud-value {
+  color: var(--accent-pink);
+  text-shadow: 0 0 8px rgba(255, 42, 95, 0.8);
+}
+
+.hud-level .hud-value {
+  color: var(--accent-yellow);
+}
+
+.hud-time .hud-value {
+  color: var(--border-glow);
+}
+
+.hud-checkpoint {
+  color: #00f5d4;
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 0.7; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1.02); }
+}
+
+/* Banner de Morte Cômica */
+.death-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  width: 85%;
+  max-width: 520px;
+  background: rgba(22, 10, 20, 0.95);
+  border: 2px solid var(--accent-pink);
+  box-shadow: var(--shadow-red), 0 20px 40px rgba(0,0,0,0.8);
+  border-radius: 14px;
+  padding: 24px;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 20;
+  backdrop-filter: blur(10px);
+}
+
+.death-banner.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.death-title {
+  font-family: var(--pixel-font);
+  color: var(--accent-pink);
+  font-size: 18px;
+  display: block;
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px rgba(255, 42, 95, 0.8);
+}
+
+.death-quote {
+  font-size: 15px;
+  color: var(--text-main);
+  line-height: 1.5;
+  margin-bottom: 16px;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.death-hint {
+  font-family: var(--pixel-font);
+  font-size: 8px;
+  color: var(--accent-yellow);
+  display: inline-block;
+  background: rgba(255, 209, 102, 0.12);
+  padding: 6px 12px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* Modais de Sobreposição (Início, Vitória, Fim de Fase) */
+.overlay-screen {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 12, 20, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 30;
+  padding: 20px;
+}
+
+.overlay-screen.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.screen-card {
+  background: var(--bg-card);
+  border: 2px solid rgba(0, 245, 212, 0.4);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), var(--shadow-neon);
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 580px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: cardEntry 0.35s ease-out;
+}
+
+@keyframes cardEntry {
+  from { transform: translateY(20px) scale(0.96); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.troll-face-icon {
+  font-size: 42px;
+  filter: drop-shadow(0 0 10px rgba(0, 245, 212, 0.5));
+  animation: float 2s infinite ease-in-out;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.card-title {
+  font-family: var(--pixel-font);
+  font-size: 17px;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.card-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  max-width: 440px;
+  line-height: 1.5;
+}
+
+.tip-box {
+  background: rgba(255, 42, 95, 0.1);
+  border: 1px dashed rgba(255, 42, 95, 0.4);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.tip-tag {
+  font-family: var(--pixel-font);
+  font-size: 8px;
+  color: var(--accent-pink);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.tip-box p {
+  font-size: 13px;
+  color: #ffccd8;
+  line-height: 1.4;
+}
+
+.controls-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.key-cap {
+  font-family: var(--pixel-font);
+  font-size: 9px;
+  background: #253354;
+  color: var(--border-glow);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 245, 212, 0.3);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.5);
+}
+
+.control-desc {
+  color: var(--text-main);
+  margin-left: 6px;
+}
+
+.btn-play-primary {
+  font-family: var(--pixel-font);
+  font-size: 12px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #00f5d4 0%, #3a86ff 100%);
+  color: #060e1d;
+  font-weight: 800;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  box-shadow: 0 6px 20px rgba(0, 245, 212, 0.4);
+  transition: all 0.2s ease;
+  margin-top: 6px;
+}
+
+.btn-play-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 245, 212, 0.6);
+  filter: brightness(1.1);
+}
+
+.btn-play-primary:active {
+  transform: translateY(1px);
+}
+
+/* Modais de Fase Concluída e Vitória */
+.stats-summary, .final-stats {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.stat-box {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 18px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 130px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.stat-num {
+  font-family: var(--pixel-font);
+  font-size: 14px;
+  color: var(--accent-yellow);
+}
+
+.final-stats {
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 16px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-main);
+}
+
+.glow-gold {
+  color: var(--accent-yellow);
+  text-shadow: 0 0 15px rgba(255, 209, 102, 0.6);
+}
+
+.glow-red {
+  color: var(--accent-pink);
+  font-family: var(--pixel-font);
+}
+
+.glow-cyan {
+  color: var(--border-glow);
+  font-weight: bold;
+}
+
+.victory-taunt {
+  font-size: 14px;
+  color: #a8d5ff;
+  font-style: italic;
+  margin: 4px 0 10px 0;
+}
+
+/* Rodapé */
+.game-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.troll-tracker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-yellow);
+  font-weight: 500;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent-pink);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent-pink);
+  animation: blink 1.2s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.3; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.quick-shortcuts {
+  font-family: monospace;
+  font-size: 11px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .game-title {
+    font-size: 12px;
+  }
+  .header-controls {
+    gap: 6px;
+  }
+  .btn-retro {
+    font-size: 8px;
+    padding: 6px 8px;
+  }
+  .hud-item {
+    font-size: 8px;
+    padding: 4px 8px;
+  }
+  .game-footer {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+}
