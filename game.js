@@ -246,6 +246,32 @@ class RetroAudioEngine {
     } catch (e) { }
   }
 
+  // Fanfarra de descoberta de segredo
+  playSecret() {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
+    try {
+      const notes = [330, 392, 659, 523, 587, 784];
+      notes.forEach((freq, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const startTime = this.ctx.currentTime + idx * 0.08;
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, startTime);
+
+        gain.gain.setValueAtTime(0.14, startTime);
+        gain.gain.linearRampToValueAtTime(0.01, startTime + 0.16);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(startTime);
+        osc.stop(startTime + 0.17);
+      });
+    } catch (e) { }
+  }
+
   // Música Chiptune de fundo procedural e contínua
   startBGM() {
     if (!this.enabled || this.bgmPlaying) return;
@@ -318,7 +344,109 @@ const DEATH_QUOTES = [
 ];
 
 // ----------------------------------------------------------------------------
-// 3. DEFINIÇÃO MODULAR DOS NÍVEIS (FÁCIL DE EXPANDIR)
+// 3. SISTEMA DE SKINS RETRÔ
+// ----------------------------------------------------------------------------
+const SKINS = [
+  {
+    id: 'default',
+    name: "Super Pedro",
+    badge: "CLÁSSICO",
+    desc: "O encanador clássico que já não aguenta mais passar raiva nas fases.",
+    colors: {
+      hat: '#d90429',
+      skin: '#ffd166',
+      shirt: '#d90429',
+      overalls: '#0077b6',
+      legs: '#023e8a',
+      shoes: '#5c3d2e',
+      eyes: '#000000'
+    },
+    aura: null
+  },
+  {
+    id: 'luigi',
+    name: "Irmão Verde",
+    badge: "RETRO",
+    desc: "O irmão alto e esmeralda. Dizem que pula com um pouco mais de esperança.",
+    colors: {
+      hat: '#2ec4b6',
+      skin: '#ffd166',
+      shirt: '#2ec4b6',
+      overalls: '#1b4332',
+      legs: '#081c15',
+      shoes: '#2d6a4f',
+      eyes: '#000000'
+    },
+    aura: null
+  },
+  {
+    id: 'shadow',
+    name: "Ninja Sombrio",
+    badge: "FURTIVO",
+    desc: "Treinado nas sombras para tentar desviar de armadilhas invisíveis.",
+    colors: {
+      hat: '#1a1a24',
+      skin: '#3d405b',
+      shirt: '#212529',
+      overalls: '#141419',
+      legs: '#0d0d11',
+      shoes: '#ff2a5f',
+      eyes: '#ff2a5f'
+    },
+    aura: 'rgba(255, 42, 95, 0.4)'
+  },
+  {
+    id: 'gold',
+    name: "Rei Dourado",
+    badge: "LENDÁRIO",
+    desc: "Brilhante como as moedas troll que explodem bem na sua cara.",
+    colors: {
+      hat: '#ffb703',
+      skin: '#ffe3a8',
+      shirt: '#ffb703',
+      overalls: '#fb8500',
+      legs: '#d48b00',
+      shoes: '#ffe8a1',
+      eyes: '#78350f'
+    },
+    aura: 'rgba(255, 183, 3, 0.6)'
+  },
+  {
+    id: 'cyber',
+    name: "Cyber Neon",
+    badge: "FUTURISTA",
+    desc: "Vindo do futuro com tecnologia quântica e luz neon.",
+    colors: {
+      hat: '#00f5d4',
+      skin: '#ccdbfd',
+      shirt: '#00f5d4',
+      overalls: '#7209b7',
+      legs: '#3a0ca3',
+      shoes: '#f72585',
+      eyes: '#00f5d4'
+    },
+    aura: 'rgba(0, 245, 212, 0.5)'
+  },
+  {
+    id: 'fire',
+    name: "Chama Ardente",
+    badge: "ELEMENTAL",
+    desc: "Equipado com o poder do fogo. Tente não queimar o cenário!",
+    colors: {
+      hat: '#ffffff',
+      skin: '#ffd166',
+      shirt: '#ffffff',
+      overalls: '#d90429',
+      legs: '#9d0208',
+      shoes: '#370617',
+      eyes: '#d90429'
+    },
+    aura: 'rgba(255, 75, 43, 0.5)'
+  }
+];
+
+// ----------------------------------------------------------------------------
+// 4. DEFINIÇÃO MODULAR DOS NÍVEIS (FÁCIL DE EXPANDIR)
 // ----------------------------------------------------------------------------
 /**
  * Tipos de entidades e blocos suportados:
@@ -331,7 +459,7 @@ const DEATH_QUOTES = [
  *      * action: 'spike_drop' (cai espinho na cabeça)
  *      * action: 'crush_down' (o próprio bloco cai esmagando)
  *      * action: 'teleport_start' (teleporta de volta ao começo rindo)
- *      * action: 'coin_explode' (solta moeda que explode)
+ *      * action: 'coin_explode' (solta míssil/bomba que explode)
  * - 'spike': Espinho mortal clássico
  * - 'inverted_enemy': Inimigo que pula no jogador se você tentar pular nele
  * - 'sign': Placa de aviso (muitas vezes mente deliberadamente!)
@@ -341,6 +469,7 @@ const DEATH_QUOTES = [
  * - 'checkpoint': Salva o progresso na fase
  * - 'fake_flag': Bandeira falsa que cai ou abre alçapão rindo
  * - 'true_goal': Saída real da fase
+ * - 'secret_barrier': Portão secreto que abre com ação oculta
  */
 
 const LEVELS = [
@@ -401,11 +530,6 @@ const LEVELS = [
       // MOEDA TROLL QUE EXPLODE (texto removido)
       { type: 'troll_coin', x: 1250, y: 360, width: 24, height: 24, collected: false },
 
-      // Espinho logo atrás do cano
-      { type: 'spike', x: 1350, y: 380, width: 40, height: 20 },
-
-      // CANO TROLL (Suga o jogador para trás contra espinhos)
-      { type: 'suction_pipe', x: 1450, y: 310, width: 50, height: 90, force: -8 },
 
       // Pulos em plataformas estreitas
       { type: 'falling_platform', x: 1560, y: 340, width: 60, height: 20 },
@@ -467,11 +591,23 @@ const LEVELS = [
     bgColorTop: "#7209b7",
     bgColorBottom: "#f72585",
     entities: [
+      // === SALA ESCONDIDA DA FASE 2 (À esquerda do início, inicialmente bloqueada por barreira secreta) ===
+      { type: 'ground', x: -450, y: 400, width: 800, height: 100 },
+      { type: 'platform', x: -450, y: 150, width: 440, height: 24 }, // Teto da sala secreta
+      { type: 'platform', x: -450, y: 150, width: 24, height: 250 }, // Parede esquerda da sala secreta
+      { type: 'platform', x: -350, y: 320, width: 140, height: 20 }, // Pedestal da vitória
+      { type: 'text_troll', x: -330, y: 200, text: "SALA SECRETA DESCOBERTA! 👑" },
+      { type: 'sign', x: -360, y: 360, width: 40, height: 40, text: "VOCÊ DESCOBRIU O SEGREDO!\nA BANDEIRA REAL SEMPRE ESTEVE AQUI! 🏆" },
+      // BANDEIRA REAL DENTRO DA SALA ESCONDIDA!
+      { type: 'true_goal', x: -280, y: 180, width: 60, height: 140 },
+
+      // PASSAGEM SECRETA (Bloqueada até o jogador andar para trás no início!)
+      { type: 'secret_barrier', x: -10, y: 150, width: 20, height: 250, locked: true },
+
       // Início fase 2
-      { type: 'ground', x: 0, y: 400, width: 350, height: 100 },
       { type: 'sign', x: 80, y: 360, width: 40, height: 40, text: "FASE 2: SEJA BEM-VINDO AO INFERNO" },
 
-      // Bloco que solta míssil troll
+      // 1. Bloco que solta míssil troll (disparado para baixo!)
       { type: 'question_block', x: 200, y: 260, width: 36, height: 36, action: 'coin_explode', used: false },
 
       // Ilha de plataformas movediças e caindo
@@ -511,18 +647,32 @@ const LEVELS = [
       // Bloco que teleporta
       { type: 'question_block', x: 1840, y: 260, width: 36, height: 36, action: 'teleport_start', used: false },
 
-      // Cano de sucção reversa
-      { type: 'suction_pipe', x: 1980, y: 310, width: 50, height: 90, force: -10 },
+      // 2. Plataforma onde ficava o cano de sucção (CANO REMOVIDO COMPLETAMENTE!)
+      { type: 'falling_platform', x: 1980, y: 340, width: 60, height: 20 },
       { type: 'falling_platform', x: 2100, y: 330, width: 60, height: 20 },
       { type: 'invisible_block', x: 2110, y: 220, width: 36, height: 36, hit: false },
       { type: 'spike', x: 1950, y: 470, width: 280, height: 30 },
 
-      // Corredor final
-      { type: 'ground', x: 2280, y: 400, width: 650, height: 100 },
-      { type: 'fake_flag', x: 2540, y: 220, width: 40, height: 180, triggered: false },
-      { type: 'invisible_block', x: 2500, y: 260, width: 36, height: 36, hit: false },
-      { type: 'platform', x: 2680, y: 220, width: 90, height: 20 },
-      { type: 'true_goal', x: 2820, y: 260, width: 60, height: 140 }
+      // 3. FINAL TROLL: ROTA IMPOSSÍVEL DE PASSAR NORMALMENTE!
+      { type: 'ground', x: 2280, y: 400, width: 670, height: 100 },
+
+      // Bloco de dica/teleporte
+      { type: 'question_block', x: 2420, y: 260, width: 36, height: 36, action: 'teleport_start', used: false },
+
+      // Placa de aviso sarcástica
+      { type: 'sign', x: 2470, y: 360, width: 40, height: 40, text: "ROTA BLOQUEADA DEFINITIVAMENTE!\nIMPOSSÍVEL PASSAR POR AQUI! ⛔\nDESISTA OU PENSE DIFERENTE!" },
+      { type: 'text_troll', x: 2430, y: 160, text: "PAREDE 100% INDESTRUTÍVEL 🧱" },
+
+      // Espinhos e armadilhas intransponíveis
+      { type: 'spike', x: 2400, y: 0, width: 220, height: 30, upsideDown: true },
+      { type: 'spike', x: 2540, y: 380, width: 40, height: 20 },
+
+      // PAREDE DE BEDROCK COLOSSAL (Do chão ao teto: y:0 até y:400)
+      { type: 'ground', x: 2580, y: 0, width: 80, height: 400 },
+
+      // Atrás da parede intransponível: Bandeira falsa visível apenas para iludir
+      { type: 'fake_flag', x: 2720, y: 220, width: 40, height: 180, triggered: false },
+      { type: 'platform', x: 2700, y: 220, width: 90, height: 20 }
     ]
   }
 ];
@@ -542,6 +692,13 @@ class TrollPlatformerGame {
     this.activeProjectiles = [];
     this.particles = [];
     this.floatingTexts = [];
+
+    // Sistema de Skins
+    this.currentSkinId = localStorage.getItem('superworld_skin') || 'default';
+    this.selectedPreviewSkinId = this.currentSkinId;
+
+    // Mecanismo Secreto da Fase 2
+    this.fase2SecretUnlocked = false;
 
     // Estatísticas do jogador
     this.totalDeaths = 0;
@@ -614,7 +771,18 @@ class TrollPlatformerGame {
       finalTime: document.getElementById('final-time'),
       finalRank: document.getElementById('final-rank'),
       finalTaunt: document.getElementById('final-taunt'),
-      liveTrollComment: document.getElementById('live-troll-comment')
+      liveTrollComment: document.getElementById('live-troll-comment'),
+      // Elementos do Sistema de Skins
+      skinsScreen: document.getElementById('skins-screen'),
+      btnSkins: document.getElementById('btn-skins'),
+      btnSkinsStart: document.getElementById('btn-skins-start'),
+      btnCloseSkins: document.getElementById('btn-close-skins'),
+      btnEquipSkin: document.getElementById('btn-equip-skin'),
+      skinPreviewCanvas: document.getElementById('skin-preview-canvas'),
+      previewSkinBadge: document.getElementById('preview-skin-badge'),
+      previewSkinName: document.getElementById('preview-skin-name'),
+      previewSkinDesc: document.getElementById('preview-skin-desc'),
+      skinsGrid: document.getElementById('skins-grid')
     };
 
     this.gameState = 'START'; // 'START', 'PLAYING', 'DEAD', 'LEVEL_CLEAR', 'VICTORY'
@@ -649,11 +817,41 @@ class TrollPlatformerGame {
       this.restartEntireGame();
     });
 
+    // Eventos do Sistema de Skins
+    if (this.dom.btnSkins) {
+      this.dom.btnSkins.addEventListener('click', () => this.openSkinsModal());
+    }
+    if (this.dom.btnSkinsStart) {
+      this.dom.btnSkinsStart.addEventListener('click', () => this.openSkinsModal());
+    }
+    if (this.dom.btnCloseSkins) {
+      this.dom.btnCloseSkins.addEventListener('click', () => this.closeSkinsModal());
+    }
+    if (this.dom.btnEquipSkin) {
+      this.dom.btnEquipSkin.addEventListener('click', () => {
+        this.equipSkin(this.selectedPreviewSkinId);
+      });
+    }
+
+    this.initSkins();
+
     // Inicia loop de renderização e lógica
     requestAnimationFrame((t) => this.gameLoop(t));
   }
 
   handleKeyDown(e) {
+    if (e.code === 'Escape') {
+      if (this.dom.skinsScreen && this.dom.skinsScreen.classList.contains('active')) {
+        this.closeSkinsModal();
+        return;
+      }
+    }
+
+    // Se o modal de skins estiver aberto, não processa movimentos do jogador
+    if (this.dom.skinsScreen && this.dom.skinsScreen.classList.contains('active')) {
+      return;
+    }
+
     if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
       e.preventDefault();
     }
@@ -767,7 +965,20 @@ class TrollPlatformerGame {
     this.player.isGrounded = false;
     this.player.isDead = false;
 
-    this.camera.x = Math.max(0, this.player.x - 250);
+    // Se estiver sem checkpoint ou reiniciando fase, reseta o segredo da Fase 2
+    if (!this.checkpoint) {
+      this.fase2SecretUnlocked = false;
+    } else if (this.fase2SecretUnlocked) {
+      // Se já estava desbloqueado, mantém a barreira secreta aberta
+      for (const ent of this.entities) {
+        if (ent.type === 'secret_barrier') {
+          ent.locked = false;
+        }
+      }
+    }
+
+    const minCamX = (this.currentLevelIndex === 1 && this.fase2SecretUnlocked) ? -450 : 0;
+    this.camera.x = Math.max(minCamX, this.player.x - 250);
   }
 
   // Respawn do jogador
@@ -1001,10 +1212,18 @@ class TrollPlatformerGame {
       this.killPlayer("Caiu no abismo infinito!");
     }
 
+    // Verificação de segredo da Fase 2: Andar para trás no início da fase
+    if (this.currentLevelIndex === 1 && !this.fase2SecretUnlocked) {
+      if (this.player.x <= 20 && (this.keys.left || this.player.vx < 0)) {
+        this.unlockFase2Secret();
+      }
+    }
+
     // 9. Atualização da Câmera (Suave com look-ahead)
     const targetCamX = this.player.x - 300;
     this.camera.x += (targetCamX - this.camera.x) * 0.1;
-    if (this.camera.x < 0) this.camera.x = 0;
+    const minCamX = (this.currentLevelIndex === 1 && this.fase2SecretUnlocked) ? -450 : 0;
+    if (this.camera.x < minCamX) this.camera.x = minCamX;
     if (this.camera.x > this.level.width - this.camera.width) {
       this.camera.x = this.level.width - this.camera.width;
     }
@@ -1023,6 +1242,8 @@ class TrollPlatformerGame {
       if (['spike', 'sign', 'text_troll', 'troll_coin', 'gravity_zone', 'illusion_floor', 'checkpoint', 'fake_flag', 'true_goal'].includes(ent.type)) {
         continue;
       }
+      // Barreira secreta só tem colisão se estiver trancada
+      if (ent.type === 'secret_barrier' && !ent.locked) continue;
       // Bloco invisível só tem colisão se já foi descoberto
       if (ent.type === 'invisible_block' && !ent.hit) continue;
 
@@ -1047,6 +1268,8 @@ class TrollPlatformerGame {
       if (['spike', 'sign', 'text_troll', 'troll_coin', 'gravity_zone', 'illusion_floor', 'checkpoint', 'fake_flag', 'true_goal'].includes(ent.type)) {
         continue;
       }
+      // Barreira secreta só tem colisão se estiver trancada
+      if (ent.type === 'secret_barrier' && !ent.locked) continue;
 
       // Bloco invisível: se o jogador vier de BAIXO (cabeçada), bate nele e descobre!
       if (ent.type === 'invisible_block') {
@@ -1171,17 +1394,17 @@ class TrollPlatformerGame {
         break;
 
       case 'coin_explode':
-        // Solta uma moeda que explode 0.5s depois
+        // Dispara míssil troll PARA BAIXO em direção ao jogador!
         AudioSys.playTrapTrigger();
-        this.spawnFloatingText("CUIDADO! 💣", ent.x - 10, ent.y - 20, '#ff2a5f');
+        this.spawnFloatingText("MÍSSIL PRA BAIXO! 🚀💣", ent.x - 20, ent.y + ent.height + 20, '#ff2a5f');
         this.activeProjectiles.push({
           x: ent.x + 8,
-          y: ent.y - 30,
+          y: ent.y + ent.height + 4,
           width: 20,
           height: 20,
           vx: 0,
-          vy: -2,
-          timer: 30,
+          vy: 3.5, // Direcionado para baixo!
+          timer: 35,
           type: 'troll_bomb'
         });
         break;
@@ -1445,16 +1668,16 @@ class TrollPlatformerGame {
       } else if (proj.type === 'troll_bomb') {
         proj.timer--;
         proj.y += proj.vy;
-        if (proj.timer <= 0) {
+        if (this.checkAABB(pBox, proj) || proj.timer <= 0) {
           AudioSys.playExplosion();
           this.screenShake = 14;
           // Se o jogador estiver perto da explosão:
           const dist = Math.hypot(
-            (this.player.x + this.player.width / 2) - proj.x,
-            (this.player.y + this.player.height / 2) - proj.y
+            (this.player.x + this.player.width / 2) - (proj.x + proj.width / 2),
+            (this.player.y + this.player.height / 2) - (proj.y + proj.height / 2)
           );
           if (dist < 80) {
-            this.killPlayer("Bomba surpresa liberada pelo bloco!");
+            this.killPlayer("Atingido pelo míssil troll disparado para baixo!");
           }
           this.activeProjectiles.splice(i, 1);
         }
@@ -1650,6 +1873,10 @@ class TrollPlatformerGame {
 
         case 'true_goal':
           this.drawFlag(ent, false);
+          break;
+
+        case 'secret_barrier':
+          this.drawSecretBarrier(ent);
           break;
 
         case 'text_troll':
@@ -2002,20 +2229,38 @@ class TrollPlatformerGame {
         this.ctx.closePath();
         this.ctx.fill();
       } else if (proj.type === 'troll_bomb') {
+        // Míssil disparado para baixo com propulsão
+        const cx = proj.x + 10;
+        const cy = proj.y + 10;
         this.ctx.fillStyle = '#111111';
         this.ctx.beginPath();
-        this.ctx.arc(proj.x + 10, proj.y + 10, 10, 0, Math.PI * 2);
+        this.ctx.arc(cx, cy, 9, 0, Math.PI * 2);
         this.ctx.fill();
-        // Pavio
+
+        // Ogiva vermelha apontada para baixo
+        this.ctx.fillStyle = '#d90429';
+        this.ctx.beginPath();
+        this.ctx.moveTo(proj.x + 3, proj.y + 12);
+        this.ctx.lineTo(proj.x + proj.width - 3, proj.y + 12);
+        this.ctx.lineTo(cx, proj.y + proj.height + 6);
+        this.ctx.closePath();
+        this.ctx.fill();
+
+        // Rastro de fogo na parte superior (pois está descendo)
+        this.ctx.fillStyle = '#ffd166';
+        this.ctx.fillRect(proj.x + 7, proj.y - 5, 6, 5);
         this.ctx.fillStyle = '#ff2a5f';
-        this.ctx.fillRect(proj.x + 8, proj.y - 2, 4, 4);
+        this.ctx.fillRect(proj.x + 8, proj.y - 9, 4, 4);
       }
     }
   }
 
-  // Render do Herói / Jogador Pixelado
+  // Render do Herói / Jogador Pixelado (Integrado com o Sistema de Skins)
   renderPlayer() {
     const p = this.player;
+    const skin = this.getEquippedSkin();
+    const colors = skin.colors;
+
     this.ctx.save();
     this.ctx.translate(p.x, p.y);
 
@@ -2029,25 +2274,34 @@ class TrollPlatformerGame {
       this.ctx.translate(-p.width, 0);
     }
 
-    // Corpo / Macacão azul
-    this.ctx.fillStyle = '#0077b6';
+    // Aura especial da skin se houver
+    if (skin.aura) {
+      this.ctx.save();
+      this.ctx.strokeStyle = skin.aura;
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeRect(1, -2, 24, 38);
+      this.ctx.restore();
+    }
+
+    // Corpo / Macacão
+    this.ctx.fillStyle = colors.overalls;
     this.ctx.fillRect(4, 16, 18, 14);
 
-    // Camiseta vermelha estilo retrô
-    this.ctx.fillStyle = '#d90429';
+    // Camiseta
+    this.ctx.fillStyle = colors.shirt;
     this.ctx.fillRect(2, 10, 22, 8);
 
     // Cabeça / Rosto cor de pele
-    this.ctx.fillStyle = '#ffd166';
+    this.ctx.fillStyle = colors.skin;
     this.ctx.fillRect(5, 4, 16, 9);
 
-    // Boné vermelho
-    this.ctx.fillStyle = '#d90429';
+    // Boné
+    this.ctx.fillStyle = colors.hat;
     this.ctx.fillRect(4, 0, 18, 5);
     this.ctx.fillRect(12, 3, 10, 3); // Aba do boné
 
     // Olhos
-    this.ctx.fillStyle = '#000000';
+    this.ctx.fillStyle = colors.eyes;
     if (this.gameState === 'DEAD') {
       // Olhos com X em caso de morte
       this.ctx.font = 'bold 8px monospace';
@@ -2058,16 +2312,244 @@ class TrollPlatformerGame {
 
     // Pernas animadas ao andar
     const legSwing = Math.sin(p.walkFrame) * 4;
-    this.ctx.fillStyle = '#023e8a';
+    this.ctx.fillStyle = colors.legs;
     this.ctx.fillRect(5 + legSwing, 28, 6, 6);
     this.ctx.fillRect(15 - legSwing, 28, 6, 6);
 
-    // Sapato marrom
-    this.ctx.fillStyle = '#5c3d2e';
+    // Sapato
+    this.ctx.fillStyle = colors.shoes;
     this.ctx.fillRect(4 + legSwing, 32, 8, 3);
     this.ctx.fillRect(14 - legSwing, 32, 8, 3);
 
     this.ctx.restore();
+  }
+
+  // Desenho da barreira secreta da Fase 2
+  drawSecretBarrier(ent) {
+    if (ent.locked) {
+      // Portão de ferro maciço trancado com cadeado
+      this.ctx.fillStyle = '#1f2430';
+      this.ctx.fillRect(ent.x, ent.y, ent.width, ent.height);
+
+      // Barras verticais
+      this.ctx.strokeStyle = '#4a5568';
+      this.ctx.lineWidth = 2;
+      for (let bx = ent.x + 4; bx < ent.x + ent.width; bx += 6) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(bx, ent.y);
+        this.ctx.lineTo(bx, ent.y + ent.height);
+        this.ctx.stroke();
+      }
+
+      // Cadeado vermelho no centro
+      const midY = ent.y + ent.height / 2;
+      this.ctx.fillStyle = '#d90429';
+      this.ctx.fillRect(ent.x - 6, midY - 12, ent.width + 12, 24);
+      this.ctx.fillStyle = '#ffd166';
+      this.ctx.font = '12px monospace';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('🔒', ent.x + ent.width / 2, midY + 5);
+      this.ctx.textAlign = 'left';
+    } else {
+      // Passagem mágica aberta e liberada
+      this.ctx.save();
+      this.ctx.fillStyle = 'rgba(0, 245, 212, 0.15)';
+      this.ctx.fillRect(ent.x - 4, ent.y, ent.width + 8, ent.height);
+      this.ctx.strokeStyle = '#00f5d4';
+      this.ctx.lineWidth = 1.5;
+      this.ctx.setLineDash([4, 4]);
+      this.ctx.strokeRect(ent.x - 4, ent.y, ent.width + 8, ent.height);
+      this.ctx.setLineDash([]);
+
+      const midY = ent.y + ent.height / 2;
+      this.ctx.fillStyle = '#00f5d4';
+      this.ctx.font = '12px monospace';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('🔓', ent.x + ent.width / 2, midY + 5);
+      this.ctx.textAlign = 'left';
+      this.ctx.restore();
+    }
+  }
+
+  // Desbloqueia o mecanismo secreto ao andar para trás na Fase 2
+  unlockFase2Secret() {
+    if (this.fase2SecretUnlocked) return;
+    this.fase2SecretUnlocked = true;
+    AudioSys.playSecret();
+    this.screenShake = 16;
+    this.spawnFloatingText("MECANISMO SECRETO ATIVADO! 🔓", 30, 260, '#00f5d4');
+    this.spawnFloatingText("SALA ESCONDIDA DESBLOQUEADA! 👑", 30, 230, '#ffd166');
+
+    // Desbloqueia a barreira para permitir passagem
+    for (const ent of this.entities) {
+      if (ent.type === 'secret_barrier') {
+        ent.locked = false;
+      }
+    }
+
+    // Partículas comemorativas da descoberta
+    for (let i = 0; i < 35; i++) {
+      this.particles.push({
+        x: -5,
+        y: 200 + Math.random() * 150,
+        vx: (Math.random() - 0.5) * 8,
+        vy: (Math.random() - 0.7) * 7,
+        size: Math.random() * 4 + 2,
+        color: ['#00f5d4', '#ffd166', '#ff2a5f', '#ffffff'][Math.floor(Math.random() * 4)],
+        life: 45 + Math.random() * 25
+      });
+    }
+  }
+
+  // Retorna a skin atualmente equipada
+  getEquippedSkin() {
+    return SKINS.find(s => s.id === this.currentSkinId) || SKINS[0];
+  }
+
+  // Inicializa o sistema e a aba de skins
+  initSkins() {
+    if (!this.dom.skinsGrid) return;
+    this.dom.skinsGrid.innerHTML = '';
+
+    SKINS.forEach((skin) => {
+      const card = document.createElement('div');
+      card.className = `skin-card ${skin.id === this.currentSkinId ? 'equipped-active' : ''} ${skin.id === this.selectedPreviewSkinId ? 'selected' : ''}`;
+      card.dataset.skinId = skin.id;
+
+      card.innerHTML = `
+        <div class="skin-card-canvas-box">
+          <canvas width="48" height="60" id="card-canvas-${skin.id}"></canvas>
+        </div>
+        <span class="skin-card-name">${skin.name}</span>
+        <span class="skin-card-badge">${skin.badge}</span>
+        ${skin.id === this.currentSkinId ? '<span class="card-equipped-tag">USANDO</span>' : ''}
+      `;
+
+      card.addEventListener('click', () => {
+        this.selectSkin(skin.id);
+      });
+
+      this.dom.skinsGrid.appendChild(card);
+
+      const miniCanvas = card.querySelector(`#card-canvas-${skin.id}`);
+      if (miniCanvas) {
+        this.drawSkinAvatar(miniCanvas, skin, 1.4);
+      }
+    });
+
+    this.updateSkinsUI();
+  }
+
+  openSkinsModal() {
+    if (!this.dom.skinsScreen) return;
+    this.dom.skinsScreen.classList.add('active');
+    this.selectedPreviewSkinId = this.currentSkinId;
+    this.updateSkinsUI();
+  }
+
+  closeSkinsModal() {
+    if (!this.dom.skinsScreen) return;
+    this.dom.skinsScreen.classList.remove('active');
+  }
+
+  selectSkin(skinId) {
+    this.selectedPreviewSkinId = skinId;
+    this.updateSkinsUI();
+  }
+
+  equipSkin(skinId) {
+    this.currentSkinId = skinId;
+    localStorage.setItem('superworld_skin', skinId);
+    AudioSys.playBump();
+    this.updateSkinsUI();
+    this.initSkins(); // Re-renderiza para atualizar tags 'USANDO'
+    this.spawnFloatingText("SKIN EQUIPADA! ✨", this.player.x, this.player.y - 20, '#00f5d4');
+  }
+
+  updateSkinsUI() {
+    const skin = SKINS.find(s => s.id === this.selectedPreviewSkinId) || SKINS[0];
+    const isEquipped = skin.id === this.currentSkinId;
+
+    if (this.dom.previewSkinBadge) this.dom.previewSkinBadge.textContent = skin.badge;
+    if (this.dom.previewSkinName) this.dom.previewSkinName.textContent = skin.name;
+    if (this.dom.previewSkinDesc) this.dom.previewSkinDesc.textContent = skin.desc;
+
+    if (this.dom.btnEquipSkin) {
+      if (isEquipped) {
+        this.dom.btnEquipSkin.textContent = "EQUIPADO ✓";
+        this.dom.btnEquipSkin.classList.add('equipped');
+      } else {
+        this.dom.btnEquipSkin.textContent = "EQUIPAR SKIN";
+        this.dom.btnEquipSkin.classList.remove('equipped');
+      }
+    }
+
+    if (this.dom.skinPreviewCanvas) {
+      this.drawSkinAvatar(this.dom.skinPreviewCanvas, skin, 3.2);
+    }
+
+    if (this.dom.skinsGrid) {
+      const cards = this.dom.skinsGrid.querySelectorAll('.skin-card');
+      cards.forEach(c => {
+        const id = c.dataset.skinId;
+        c.classList.toggle('selected', id === this.selectedPreviewSkinId);
+        c.classList.toggle('equipped-active', id === this.currentSkinId);
+      });
+    }
+  }
+
+  // Renderiza o avatar de uma skin em um canvas específico
+  drawSkinAvatar(canvas, skin, scale = 2) {
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    const charW = 26;
+    const charH = 38;
+    const px = Math.floor((canvas.width - charW * scale) / 2);
+    const py = Math.floor((canvas.height - charH * scale) / 2) + 2;
+    ctx.translate(px, py);
+    ctx.scale(scale, scale);
+
+    if (skin.aura) {
+      ctx.strokeStyle = skin.aura;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(1, -2, 24, 38);
+    }
+
+    // Corpo / Macacão
+    ctx.fillStyle = skin.colors.overalls;
+    ctx.fillRect(4, 16, 18, 14);
+
+    // Camiseta
+    ctx.fillStyle = skin.colors.shirt;
+    ctx.fillRect(2, 10, 22, 8);
+
+    // Cabeça / Rosto
+    ctx.fillStyle = skin.colors.skin;
+    ctx.fillRect(5, 4, 16, 9);
+
+    // Boné
+    ctx.fillStyle = skin.colors.hat;
+    ctx.fillRect(4, 0, 18, 5);
+    ctx.fillRect(12, 3, 10, 3);
+
+    // Olhos
+    ctx.fillStyle = skin.colors.eyes;
+    ctx.fillRect(15, 6, 3, 3);
+
+    // Pernas
+    ctx.fillStyle = skin.colors.legs;
+    ctx.fillRect(5, 28, 6, 6);
+    ctx.fillRect(15, 28, 6, 6);
+
+    // Sapatos
+    ctx.fillStyle = skin.colors.shoes;
+    ctx.fillRect(4, 32, 8, 3);
+    ctx.fillRect(14, 32, 8, 3);
+
+    ctx.restore();
   }
 
   // Partículas

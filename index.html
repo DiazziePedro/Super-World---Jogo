@@ -19,6 +19,9 @@
         <h1 class="game-title">SUPER WORLD</h1>
       </div>
       <div class="header-controls">
+        <button id="btn-skins" class="btn-retro icon-btn" title="Personalizar Skins">
+          👕 Skins
+        </button>
         <button id="btn-sound" class="btn-retro icon-btn" title="Alternar Som (M)">
           <span id="sound-icon">🔊</span> Som
         </button>
@@ -100,9 +103,52 @@
             </div>
           </div>
 
-          <button id="btn-play" class="btn-play-primary">
-            JOGAR AGORA
-          </button>
+          <div class="start-actions">
+            <button id="btn-play" class="btn-play-primary">
+              JOGAR AGORA
+            </button>
+            <button id="btn-skins-start" class="btn-retro btn-skins-shortcut" title="Escolher Skin">
+              👕 Escolher Skin
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skins Modal Overlay -->
+      <div id="skins-screen" class="overlay-screen">
+        <div class="screen-card skins-card">
+          <div class="skins-modal-header">
+            <div class="skins-title-group">
+              <span class="troll-face-icon" style="font-size: 26px;">👕</span>
+              <div>
+                <h2 class="card-title">CABINE DE SKINS</h2>
+                <p class="card-subtitle">Personalize seu herói para passar vergonha com estilo</p>
+              </div>
+            </div>
+            <button id="btn-close-skins" class="btn-close-modal" title="Fechar (ESC)">✕</button>
+          </div>
+
+          <div class="skins-content-layout">
+            <!-- Left: Big preview & details -->
+            <div class="skin-preview-showcase">
+              <div class="preview-canvas-box">
+                <canvas id="skin-preview-canvas" width="120" height="150"></canvas>
+              </div>
+              <div class="preview-info">
+                <span id="preview-skin-badge" class="skin-badge">CLÁSSICO</span>
+                <h3 id="preview-skin-name" class="preview-name">Super Pedro</h3>
+                <p id="preview-skin-desc" class="preview-desc">O clássico encanador que não aguenta mais passar raiva.</p>
+                <button id="btn-equip-skin" class="btn-play-primary btn-equip">EQUIPAR SKIN</button>
+              </div>
+            </div>
+
+            <!-- Right: Grid of selectable skins -->
+            <div class="skins-grid-container">
+              <div class="skins-grid" id="skins-grid">
+                <!-- Inserido dinamicamente via JavaScript -->
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
